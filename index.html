@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вопросы для .NET Middle Strong разработчика</title>
+    <title>Вопросы для .NET Middle разработчика</title>
     
     <style>
         :root {
@@ -174,7 +174,6 @@
             flex: 1;
         }
 
-        /* SVG Иконки */
         .icon {
             width: 22px;
             height: 22px;
@@ -207,22 +206,25 @@
             display: block;
         }
 
+        .q-wrapper {
+            border-top: 1px solid var(--border-color);
+        }
+        .q-wrapper:first-child {
+            border-top: none;
+        }
+
         .q-item {
             display: flex;
             align-items: flex-start;
             gap: 14px;
             padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border-color);
             cursor: pointer;
             transition: all 0.2s ease;
-        }
-
-        .q-item:first-child {
-            border-top: none;
+            user-select: none;
         }
 
         .q-item:hover {
-            background: rgba(59, 130, 246, 0.04);
+            background: rgba(59, 130, 246, 0.02);
         }
 
         .q-num {
@@ -236,12 +238,15 @@
             text-align: center;
         }
 
+        .q-text-content {
+            flex: 1;
+        }
+
         .q-text {
             font-size: 15px;
             color: var(--text-main);
             line-height: 1.6;
-            flex: 1;
-            font-weight: 400;
+            font-weight: 500;
         }
 
         .q-ask {
@@ -265,6 +270,28 @@
         .q-item:hover .q-ask {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        .answer {
+            padding: 0 1.5rem 1.25rem 3.8rem;
+            font-size: 14.5px;
+            color: var(--text-main);
+            line-height: 1.6;
+            display: none;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        
+        .answer.open {
+            display: block;
+        }
+
+        .answer ul {
+            margin-left: 1.25rem;
+            margin-top: 6px;
+        }
+        
+        .answer li {
+            margin-bottom: 4px;
         }
 
         .hidden {
@@ -296,11 +323,24 @@
 </div>
 
 <script>
-function sendPrompt(text) {
+function sendPrompt(text, event) {
+  event.stopPropagation(); // Чтобы не закрывался/открывался ответ при клике на ссылку
   console.log("Отправка запроса: ", text);
 }
 
-// Словарь со встроенными SVG-кодами иконок вместо внешних шрифтов
+function getVisitCount() {
+  let visits = localStorage.getItem("page_visits_count");
+  if (visits === null) {
+    visits = 1;
+  } else {
+    visits = parseInt(visits, 10) + 1;
+  }
+  localStorage.setItem("page_visits_count", visits);
+  return visits;
+}
+
+const currentVisits = getVisitCount();
+
 const icons = {
   csharp: `<svg class="icon" viewBox="0 0 24 24"><path d="M16 8a5 5 0 1 0 0 8" /><path d="M12 5v14" /><path d="M7 12h10" /></svg>`,
   server: `<svg class="icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="2" /><rect x="3" y="14" width="18" height="6" rx="2" /><line x1="7" y1="7" x2="7" y2="7.01" /><line x1="7" y1="17" x2="7" y2="17.01" /></svg>`,
@@ -321,194 +361,601 @@ const data = [
   {
     title:"C# и .NET Core / Runtime",icon: icons.csharp,color:"#185FA5",bg:"#E6F1FB",tc:"#0C447C",
     questions:[
-      "Чем отличается .NET Framework от .NET Core / .NET 5+?",
-      "Как работает сборщик мусора (GC) в .NET: поколения, LOH, финализация?",
-      "Что такое managed vs unmanaged память? Когда нужен IDisposable?",
-      "Value types vs reference types: стек, куча, boxing/unboxing, struct vs class?",
-      "Как работает async/await под капотом? Что такое SynchronizationContext?",
-      "Разница Task, ValueTask, Thread, ThreadPool?",
-      "Что такое IEnumerable vs IQueryable? Где используется каждый?",
-      "Как работает LINQ: отложенное выполнение, деревья выражений?",
-      "Generics: constraints, covariance/contravariance (in/out)?",
-      "Delegates, Action, Func, Predicate — разница и применение?",
-      "Что такое events, multicast delegates, утечки памяти через события?",
-      "Span<T>, Memory<T>, ArrayPool — зачем и когда?",
-      "Reflection vs Source Generators — разница, производительность?",
-      "Атрибуты: создание, чтение через Reflection, компилируемые атрибуты?",
-      "Что такое record types и positional records в C# 9+?",
-      "Pattern matching: switch expressions, property patterns, when guards?",
-      "Nullability annotations и nullable reference types в C# 8+?",
-      "Что такое stackalloc и unsafe код — когда оправдано?",
-      "Как работает интерфейс IAsyncEnumerable<T>?",
-      "CLR JIT vs AOT компиляция — отличия, NativeAOT?",
+      {
+        q: "Чем отличается .NET Framework от .NET Core / .NET 5+?",
+        a: "<ul><li><b>Кроссплатформенность:</b> Framework работает только под Windows. Core / .NET 5+ кроссплатформенны (Windows, Linux, macOS).</li><li><b>Архитектура:</b> Framework монолитен и ставится в систему глобально. Core — модульный, легковесный, поставляется как Nuget и поддерживает self-contained сборки.</li><li><b>Производительность:</b> Core изначально переписан с упором на производительность (новый JIT, Span&lt;T&gt;, оптимизации памяти).</li></ul>"
+      },
+      {
+        q: "Как работает сборщик мусора (GC) в .NET: поколения, LOH, финализация?",
+        a: "<ul><li><b>Поколения:</b> Куча делится на Gen 0 (новые короткоживущие объекты), Gen 1 (буфер) и Gen 2 (долгоживущие). Сборка в Gen 0 быстрая и частая, в Gen 2 — редкая и долгая.</li><li><b>LOH (Large Object Heap):</b> Объекты >85,000 байт попадают сюда напрямую в Gen 2. Память LOH по умолчанию не дефрагментируется ради экономии ресурсов, а просто переиспользуется.</li><li><b>Финализация:</b> Объекты с деструкторами перед очисткой попадают в Finalization Queue. Их очистка требует как минимум двух циклов сборки мусора.</li></ul>"
+      },
+      {
+        q: "Что такое managed vs unmanaged память? Когда нужен IDisposable?",
+        a: "<ul><li><b>Managed (управляемая):</b> Память (куча), контролируемая средой CLR и автоматически очищаемая сборщиком мусора (GC).</li><li><b>Unmanaged (неуправляемая):</b> Внешние ресурсы (дескрипторы файлов, сетевые сокеты, соединения БД, память через Marshal).</li><li><b>IDisposable:</b> Интерфейс с методом <code>Dispose()</code>. Нужен для ручного, явного и своевременного освобождения неуправляемых ресурсов с помощью конструкции <code>using</code>.</li></ul>"
+      },
+      {
+        q: "Value types vs reference types: стек, куча, boxing/unboxing, struct vs class?",
+        a: "<ul><li><b>Value types (структуры, enum, int):</b> Хранят значения напрямую, обычно размещаются на стеке, передаются копированием значения.</li><li><b>Reference types (классы, интерфейсы, строки):</b> Хранят ссылку на объект в управляемой куче, передаются по ссылке.</li><li><b>Boxing/Unboxing:</b> Boxing — упаковка значимого типа в ссылочный (объект копируется со стека в кучу, нагружая GC). Unboxing — обратное извлечение.</li></ul>"
+      },
+      {
+        q: "Как работает async/await под капотом? Что такое SynchronizationContext?",
+        a: "<ul><li><b>Под капотом:</b> Компилятор разворачивает асинхронный метод в структуру-автомат (<code>State Machine</code>). Код выполняется синхронно до первого незавершенного <code>await</code>, поток освобождается, а остаток метода регистрируется как продолжение (continuation).</li><li><b>SynchronizationContext:</b> Объект, определяющий, в каком потоке (UI поток или пул потоков) выполнится продолжение метода. В ASP.NET Core этот контекст отсутствует, все продолжения идут на ThreadPool.</li></ul>"
+      },
+      {
+        q: "Разница Task, ValueTask, Thread, ThreadPool?",
+        a: "<ul><li><b>Thread:</b> Физический поток ОС, создавать вручную дорого (~1МБ на стек).</li><li><b>ThreadPool:</b> Пул готовых потоков CLR, исключающий накладные расходы на их создание.</li><li><b>Task:</b> Ссылочная абстракция над асинхронной операцией. Выделяется в куче.</li><li><b>ValueTask:</b> Структура (значимый тип). Используется вместо Task, если операция часто завершается синхронно, чтобы избежать лишней аллокации в куче.</li></ul>"
+      },
+      {
+        q: "Что такое IEnumerable vs IQueryable? Где используется каждый?",
+        a: "<ul><li><b>IEnumerable:</b> Работает с коллекциями в оперативной памяти (In-Memory). Фильтрация скачивает все элементы в память приложения и фильтрует на стороне C#.</li><li><b>IQueryable:</b> Работает с удаленными источниками данных (EF Core). Строит дерево выражений (Expression Tree) и транслирует его в SQL-запрос, выполняя фильтрацию на сервере БД.</li></ul>"
+      },
+      {
+        q: "Как работает LINQ: отложенное выполнение, деревья выражений?",
+        a: "<ul><li><b>Отложенное выполнение:</b> Запрос LINQ не выполняется в момент создания, а только при итерации (в <code>foreach</code>, <code>ToList()</code>, <code>Count()</code>).</li><li><b>Деревья выражений:</b> Код представляется в виде структуры данных (дерева объектов), которую провайдер БД может распарсить и превратить в SQL-код.</li></ul>"
+      },
+      {
+        q: "Generics: constraints, covariance/contravariance (in/out)?",
+        a: "<ul><li><b>Constraints (ограничения):</b> Ключевое слово <code>where</code>, задающее правила для типа (например, <code>where T : class, new()</code>).</li><li><b>Ковариантность (out T):</b> Позволяет использовать более производный тип, чем задан (только для возвращаемых значений, например, <code>IEnumerable&lt;out T&gt;</code>).</li><li><b>Контравариантность (in T):</b> Позволяет использовать более базовый тип, чем задан (только для входных параметров, например, <code>Action&lt;in T&gt;</code>).</li></ul>"
+      },
+      {
+        q: "Delegates, Action, Func, Predicate — разница и применение?",
+        a: "<ul><li><b>Delegate:</b> Типобезопасный указатель на метод.</li><li><b>Func&lt;T, TResult&gt;:</b> Встроенный делегат для методов, принимающих параметры и возвращающих значение.</li><li><b>Action&lt;T&gt;:</b> Делегат для методов, ничего не возвращающих (void).</li><li><b>Predicate&lt;T&gt;:</b> Делегат, принимающий один параметр и возвращающий bool (эквивалент <code>Func&lt;T, bool&gt;</code>).</li></ul>"
+      },
+      {
+        q: "Что такое events, multicast delegates, утечки памяти через события?",
+        a: "<ul><li><b>Multicast-делегаты:</b> Делегаты, хранящие ссылки на несколько методов и вызывающие их по цепочке.</li><li><b>Events (события):</b> Инкапсулированная обертка над делегатом, позволяющая внешнему коду только подписываться (<code>+=</code>) и отписываться (<code>-=</code>).</li><li><b>Утечки памяти:</b> Если долгоживущий объект (издатель) держит ссылку на метод короткоживущего объекта (подписчика), GC не сможет удалить подписчика. Нужно отписываться.</li></ul>"
+      },
+      {
+        q: "Span&lt;T&gt;, Memory&lt;T&gt;, ArrayPool — зачем и когда?",
+        a: "<ul><li><b>Span&lt;T&gt;:</b> Структура <code>ref struct</code>, представляющая непрерывный кусок памяти (стек/куча) без выделения памяти в куче при взятии срезов (подстрок).</li><li><b>Memory&lt;T&gt;:</b> Похож на Span, но может жить в куче и использоваться внутри асинхронных методов с await.</li><li><b>ArrayPool:</b> Пул переиспользуемых массивов. Исключает фрагментацию кучи при частом выделении больших буферов данных.</li></ul>"
+      },
+      {
+        q: "Reflection vs Source Generators — разница, производительность?",
+        a: "<ul><li><b>Reflection (Рефлексия):</b> Анализ метаданных и динамический вызов кода в рантайме (Runtime). Работает медленно, мешает AOT-компиляции.</li><li><b>Source Generators:</b> Анализ и автоматическая генерация C#-кода на этапе компиляции (Compile time). Переносит нагрузку на сборку, обеспечивая максимальную скорость.</li></ul>"
+      },
+      {
+        q: "Атрибуты: создание, чтение через Reflection, компилируемые атрибуты?",
+        a: "<ul><li><b>Создание:</b> Наследование от класса <code>System.Attribute</code>.</li><li><b>Чтение:</b> Считывание метаданных с типов или свойств в рантайме с помощью методов рефлексии (<code>GetCustomAttributes</code>).</li><li><b>Компилируемые:</b> Атрибуты (например, <code>[Obsolete]</code>, <code>[Conditional]</code>), обрабатываемые самим компилятором для генерации варнингов или изменения логики сборки.</li></ul>"
+      },
+      {
+        q: "Что такое record types и positional records в C# 9+?",
+        a: "<ul><li><b>Record types:</b> Ссылочные или значимые типы, ориентированные на неизменяемость (Immutability) и сравниваемые по значению свойств, а не по ссылке.</li><li><b>Positional records:</b> Краткая запись (<code>record Person(string Name, int Age);</code>), для которой компилятор сам генерирует init-свойства, конструктор и деконструктор.</li></ul>"
+      },
+      {
+        q: "Pattern matching: switch expressions, property patterns, when guards?",
+        a: "<ul><li><b>Switch expressions:</b> Компактный синтаксис switch, возвращающий значение напрямую.</li><li><b>Property patterns:</b> Проверка свойств объекта (например, <code>obj is Person { Age: > 18 }</code>).</li><li><b>When guards:</b> Дополнительные условия к паттерну (<code>case Student s when s.Gpa > 4.5</code>).</li></ul>"
+      },
+      {
+        q: "Nullability annotations и nullable reference types в C# 8+?",
+        a: "<ul><li><b>Суть:</b> Механизм статического анализа компилятора, заставляющий разработчика явно разделять типы, которые могут быть null (<code>string?</code>), и которые не могут (<code>string</code>). Помогает избежать NullReferenceException.</li></ul>"
+      },
+      {
+        q: "Что такое stackalloc и unsafe код — когда оправдано?",
+        a: "<ul><li><b>Unsafe код:</b> Блок кода, где разрешена прямая работа с указателями памяти в стиле C++.</li><li><b>Stackalloc:</b> Оператор, выделяющий массив фиксированного размера на стеке, а не в куче.</li><li><b>Оправданность:</b> Только в высокопроизводительных сценариях (криптография, обработка видео, парсинг бинарных протоколов).</li></ul>"
+      },
+      {
+        q: "Как работает интерфейс IAsyncEnumerable&lt;T&gt;?",
+        a: "<ul><li>Позволяет осуществлять асинхронный стриминг данных по одному элементу по мере их готовности (через <code>await foreach</code>). Исключает выкачивание огромных коллекций в память целиком.</li></ul>"
+      },
+      {
+        q: "CLR JIT vs AOT компиляция — отличия, NativeAOT?",
+        a: "<ul><li><b>JIT (Just-In-Time):</b> Код компилируется в промежуточный IL, а CLR превращает его в машинные инструкции на лету при первом запуске метода.</li><li><b>AOT (Ahead-Of-Time):</b> Код компилируется в машинный код целевой ОС заранее на этапе сборки.</li><li><b>NativeAOT:</b> Сборка в .NET без рантайм-JIT. Приложение запускается мгновенно, ест меньше RAM и не требует установленного .NET на сервере.</li></ul>"
+      }
     ]
   },
   {
     title:"ASP.NET Core",icon: icons.server,color:"#0F6E56",bg:"#E1F5EE",tc:"#085041",
     questions:[
-      "Жизненный цикл HTTP-запроса в ASP.NET Core: middleware pipeline?",
-      "Как работает Dependency Injection встроенный в ASP.NET Core?",
-      "Scoped vs Transient vs Singleton — разница и ловушки?",
-      "Как работают Minimal API vs Controllers?",
-      "Что такое Filters: Authorization, Action, Result, Exception — порядок выполнения?",
-      "Model Binding и Validation: DataAnnotations, FluentValidation?",
-      "Как настроить CORS и почему это важно?",
-      "Authentication vs Authorization: JWT, Cookie, OAuth2 / OIDC?",
-      "Что такое ClaimsPrincipal, Identity, Roles vs Policy-based auth?",
-      "Kestrel vs IIS — чем отличаются, как хостировать?",
-      "Configuration: appsettings, переменные среды, IOptions<T>, secrets?",
-      "Logging: ILogger, Serilog, Structured Logging, correlation ID?",
-      "Health checks, Liveness vs Readiness probes?",
-      "Как работает SignalR: WebSockets, Long Polling, Server-Sent Events?",
-      "gRPC в .NET — Protobuf, streaming, отличие от REST?",
-      "Rate Limiting в ASP.NET Core 7+?",
-      "Output Caching vs Response Caching — отличия?",
-      "Как правильно обрабатывать ошибки: ProblemDetails, middleware, ExceptionHandler?",
+      {
+        q: "Жизненный цикл HTTP-запроса в ASP.NET Core: middleware pipeline?",
+        a: "<ul><li>Запрос последовательно проходит через конвейер (Pipeline) подключенных компонентов — <b>Middleware</b>. Каждый компонент может обработать запрос, передать его дальше через <code>next()</code> или прервать цепочку. Ответ возвращается обратно через те же компоненты.</li></ul>"
+      },
+      {
+        q: "Как работает Dependency Injection встроенный в ASP.NET Core?",
+        a: "<ul><li>Контейнер DI регистрирует типы на старте приложения. При создании контроллеров или сервисов контейнер автоматически разрешает зависимости и внедряет их через конструктор (Constructor Injection).</li></ul>"
+      },
+      {
+        q: "Scoped vs Transient vs Singleton — разница и ловушки?",
+        a: "<ul><li><b>Transient:</b> Новый экземпляр при каждом запросе из контейнера.</li><li><b>Scoped:</b> Один экземпляр на один HTTP-запрос.</li><li><b>Singleton:</b> Один экземпляр создается один раз на все время жизни приложения.</li><li><b>Ловушка (Captive Dependency):</b> Внедрение Scoped-сервиса в Singleton-сервис. Scoped-объект застревает в памяти навсегда, ломая изоляцию данных (например, потоконебезопасный DbContext).</li></ul>"
+      },
+      {
+        q: "Как работают Minimal API vs Controllers?",
+        a: "<ul><li><b>Controllers:</b> Классический MVC-подход на основе классов, рефлексии, соглашений и атрибутов маршрутизации.</li><li><b>Minimal API:</b> Легковесный подход (.NET 6+), где эндпоинты привязываются через лямбды прямо в Program.cs. Работает быстрее из-за отсутствия накладных расходов MVC.</li></ul>"
+      },
+      {
+        q: "Что такое Filters: Authorization, Action, Result, Exception — порядок выполнения?",
+        a: "<ul><li>Фильтры выполняют код на стадиях MVC-действия. Порядок: 1. Authorization (права), 2. Resource (до создания модели), 3. Action (до/после метода), 4. Result (до/после вывода ответа). Exception-фильтры ловят ошибки контроллера.</li></ul>"
+      },
+      {
+        q: "Model Binding и Validation: DataAnnotations, FluentValidation?",
+        a: "<ul><li><b>Model Binding:</b> Процесс маппинга данных HTTP-запроса (Body, Query, Route) в параметры C#-методов.</li><li><b>DataAnnotations:</b> Валидация атрибутами над свойствами модели (<code>[Required]</code>).</li><li><b>FluentValidation:</b> Сторонняя библиотека, выносящая правила в отдельные строго типизированные классы, изолируя логику валидации.</li></ul>"
+      },
+      {
+        q: "Как настроить CORS и почему это важно?",
+        a: "<ul><li><b>CORS:</b> Защита браузера, запрещающая скриптам делать запросы к другому домену. В ASP.NET Core настраивается через <code>AddCors()</code> и <code>UseCors()</code>, где явно перечисляются разрешенные сторонние домены и методы.</li></ul>"
+      },
+      {
+        q: "Authentication vs Authorization: JWT, Cookie, OAuth2 / OIDC?",
+        a: "<ul><li><b>Authentication:</b> Проверка «Кто ты?» (проверка пароля, токена или куки).</li><li><b>Authorization:</b> Проверка «Что тебе разрешено?» (роли, политики).</li><li><b>JWT:</b> Безсерверный stateless токен, хранящий claims на клиенте с криптографической подписью сервера.</li><li><b>Cookie:</b> Stateful сессия, сохраняемая в браузере и автоматически отсылаемая с каждым запросом.</li><li><b>OAuth2 / OIDC:</b> OAuth2 — протокол авторизации доступа к API, OpenID Connect — надстройка над ним для аутентификации пользователя.</li></ul>"
+      },
+      {
+        q: "Что такое ClaimsPrincipal, Identity, Roles vs Policy-based auth?",
+        a: "<ul><li><b>Identity:</b> Паспорт пользователя (утверждения о нем).</li><li><b>ClaimsPrincipal:</b> Сам пользователь, владеющий одним или несколькими паспортами (Identity). Содержит Claims (пары Ключ-Значение).</li><li><b>Role-based:</b> Проверка жестких ролей (Admin).</li><li><b>Policy-based:</b> Гибкий подход, объединяющий любые требования (Claims, логику) в именованную политику.</li></ul>"
+      },
+      {
+        q: "Kestrel vs IIS — чем отличаются, как хостировать?",
+        a: "<ul><li><b>Kestrel:</b> Кроссплатформенный, сверхбыстрый веб-сервер .NET по умолчанию. Не имеет админ-панелей и защиты.</li><li><b>IIS:</b> Полноценный веб-сервер для Windows.</li><li><b>Рекомендация:</b> Ставить Kestrel за полноценный Reverse Proxy (Nginx, IIS, YARP), который берет на себя SSL, статику и балансировку.</li></ul>"
+      },
+      {
+        q: "Configuration: appsettings, переменные среды, IOptions&lt;T&gt;, secrets?",
+        a: "<ul><li><b>Источники:</b> Настройки иерархичны. Читаются из appsettings.json, переопределяются переменными среды, аргументами CLI или User Secrets.</li><li><b>IOptions&lt;T&gt;:</b> Превращает JSON-секции в C#-объекты. Бывает: <code>IOptions</code> (singleton), <code>IOptionsSnapshot</code> (scoped, обновляется на запрос), <code>IOptionsMonitor</code> (singleton с реакцией на изменения).</li></ul>"
+      },
+      {
+        q: "Logging: ILogger, Serilog, Structured Logging, correlation ID?",
+        a: "<ul><li><b>Structured Logging:</b> Логирование в формате JSON объектов (а не плоского текста) для легкого поиска. Реализуется через Serilog.</li><li><b>Correlation ID:</b> Сквозной ID запроса, прокидываемый через микросервисы в логи, позволяющий отследить полный путь упавшего запроса.</li></ul>"
+      },
+      {
+        q: "Health checks, Liveness vs Readiness probes?",
+        a: "<ul><li><b>Liveness:</b> Проверяет, живо ли само приложение (если упало, Kubernetes перезапустит контейнер).</li><li><b>Readiness:</b> Проверяет готовность инфраструктуры (БД, очереди). Если проверка провалена, трафик на этот инстанс временно перекрывается.</li></ul>"
+      },
+      {
+        q: "Как работает SignalR: WebSockets, Long Polling, Server-Sent Events?",
+        a: "<ul><li>Библиотека двусторонней связи реального времени. Автоматически выбирает лучший транспорт: 1. WebSockets (полнодуплексный канал), 2. Server-Sent Events, 3. Long Polling (постоянный опрос короткими запросами).</li></ul>"
+      },
+      {
+        q: "gRPC в .NET — Protobuf, streaming, отличие от REST?",
+        a: "<ul><li>Работает поверх HTTP/2, данные сериализуются в компактный бинарный формат <b>Protobuf</b> на основе .proto схем. Поддерживает стриминг в обе стороны, работает быстрее традиционного REST с JSON.</li></ul>"
+      },
+      {
+        q: "Rate Limiting в ASP.NET Core 7+?",
+        a: "<ul><li>Встроенная защита API от DDoS и перегрузок. Поддерживает алгоритмы: Fixed Window (фиксированное окно времени), Sliding Window (скользящее), Token Bucket (корзина токенов) и Concurrency (лимит одновременных запросов).</li></ul>"
+      },
+      {
+        q: "Output Caching vs Response Caching — отличия?",
+        a: "<ul><li><b>Response Caching:</b> Проставляет HTTP-заголовки управления кэшем для браузера или прокси.</li><li><b>Output Caching (.NET 7+):</b> Сервер сам кэширует HTML/JSON ответ в своей памяти или Redis и мгновенно отдает его, поддерживая инвалидацию по тегам.</li></ul>"
+      },
+      {
+        q: "Как правильно обрабатывать ошибки: ProblemDetails, middleware, ExceptionHandler?",
+        a: "<ul><li>Использовать глобальный перехватчик через <code>UseExceptionHandler</code>. Ошибки логируются, а клиенту возвращается стандартизированный JSON формата RFC 7807 (<b>ProblemDetails</b>) с понятным кодом, скрывая внутренний StackTrace.</li></ul>"
+      }
     ]
   },
   {
     title:"Entity Framework Core",icon: icons.database,color:"#993C1D",bg:"#FAECE7",tc:"#711B0C",
     questions:[
-      "Как работает DbContext: Unit of Work, Identity Map, Change Tracker?",
-      "Code First vs Database First vs Model First?",
-      "Миграции: создание, применение, откат, squash?",
-      "Lazy Loading vs Eager Loading vs Explicit Loading?",
-      "N+1 проблема — как обнаружить и решить?",
-      "Как работает AsNoTracking и когда его использовать?",
-      "Транзакции в EF Core: SaveChanges, BeginTransaction, Ambient transactions?",
-      "Конфигурация через Fluent API vs Data Annotations?",
-      "Owned Types, Table Splitting, TPH/TPT/TPC наследование?",
-      "Raw SQL, FromSql, ExecuteSql — когда уходить от LINQ?",
-      "Как работает Interceptors и Query Filters в EF Core?",
-      "Оптимизация запросов: compiled queries, split queries, projection?",
-      "Конкурентный доступ: Optimistic vs Pessimistic Concurrency?",
+      {
+        q: "Как работает DbContext: Unit of Work, Identity Map, Change Tracker?",
+        a: "<ul><li><b>DbContext:</b> Реализует паттерны Repository (через DbSet) и Unit of Work (коммитит изменения за одну транзакцию в <code>SaveChanges</code>).</li><li><b>Change Tracker:</b> Отслеживает состояния сущностей (Added, Modified...).</li><li><b>Identity Map:</b> Кэш 1-го уровня. Если сущность с ID=1 уже загружена в контекст, повторный запрос вернет этот же объект из памяти без обращения к БД.</li></ul>"
+      },
+      {
+        q: "Code First vs Database First vs Model First?",
+        a: "<ul><li><b>Code First:</b> Разработчик пишет код на C#, база генерируется миграциями (основной подход).</li><li><b>Database First:</b> База уже есть, C#-классы генерируются по таблицам через CLI (scaffold).</li><li><b>Model First:</b> Визуальный дизайнер (устарело, в EF Core не поддерживается).</li></ul>"
+      },
+      {
+        q: "Миграции: создание, применение, откат, squash?",
+        a: "<ul><li>Создание через <code>ef migrations add</code> (генерирует методы Up и Down), применение через <code>ef database update</code>. Откат — накат на конкретную старую миграцию. Squash — объединение старых миграций в одну стартовую.</li></ul>"
+      },
+      {
+        q: "Lazy Loading vs Eager Loading vs Explicit Loading?",
+        a: "<ul><li><b>Eager (.Include()):</b> Жадная загрузка связанных данных сразу через SQL JOIN-ы.</li><li><b>Explicit (.Load()):</b> Явная ручная подгрузка связанных данных позже по требованию.</li><li><b>Lazy Loading:</b> Автоподгрузка данных из БД при первом обращении к навигационному свойству. Опасна скрытыми лавинообразными запросами.</li></ul>"
+      },
+      {
+        q: "N+1 проблема — как обнаружить и решить?",
+        a: "<ul><li><b>Суть:</b> Приложение делает 1 запрос для списка родителей, а затем в цикле N запросов для детей каждого родителя.</li><li><b>Обнаружение:</b> По логам SQL в консоли.</li><li><b>Решение:</b> Использовать Eager Loading (<code>.Include()</code>) или проекции через <code>.Select()</code>.</li></ul>"
+      },
+      {
+        q: "Как работает AsNoTracking и когда его использовать?",
+        a: "<ul><li>Отключает слежку Change Tracker за объектами. EF Core считывает данные быстрее и экономит память. Использовать во всех операциях Read-Only (только чтение без последующего сохранения изменений).</li></ul>"
+      },
+      {
+        q: "Транзакции в EF Core: SaveChanges, BeginTransaction, Ambient transactions?",
+        a: "<ul><li><b>SaveChanges:</b> По умолчанию автоматически оборачивает все команды в одну транзакцию.</li><li><b>BeginTransaction:</b> Явное открытие транзакции вручную, если нужно связать несколько вызовов SaveChanges или сырой SQL.</li><li><b>Ambient (TransactionScope):</b> Распределенные транзакции на несколько разных контекстов.</li></ul>"
+      },
+      {
+        q: "Конфигурация через Fluent API vs Data Annotations?",
+        a: "<ul><li><b>Data Annotations:</b> Атрибуты прямо над свойствами моделей (<code>[Key]</code>). Быстро, но засоряет модели деталями инфраструктуры.</li><li><b>Fluent API:</b> Настройка маппинга в методе <code>OnModelCreating</code> через цепочки методов. Сохраняет доменные модели «чистыми» (POCO).</li></ul>"
+      },
+      {
+        q: "Owned Types, Table Splitting, TPH/TPT/TPC наследование?",
+        a: "<ul><li><b>Owned Types:</b> Объекты без ID (например, Address внутри User), поля которых едут в колонки той же таблицы.</li><li><b>Table Splitting:</b> Маппинг двух C#-сущностей в одну таблицу.</li><li><b>TPH (Table-per-Hierarchy):</b> Вся иерархия классов едет в одну таблицу с колонкой-дискриминатором (дефолт).</li><li><b>TPT (Table-per-Type):</b> Каждому классу своя таблица, связи через FK (медленно).</li><li><b>TPC:</b> Таблицы только для конкретных неабстрактных классов.</li></ul>"
+      },
+      {
+        q: "Raw SQL, FromSql, ExecuteSql — когда уходить от LINQ?",
+        a: "<ul><li>Уходить при сложных специфичных запросах (рекурсивные CTE) или массовых операциях. В EF Core 7+ появились <code>ExecuteUpdate</code> и <code>ExecuteDelete</code> для массовых правок напрямую в БД за один запрос без загрузки сущностей в память.</li></ul>"
+      },
+      {
+        q: "Как работает Interceptors и Query Filters в EF Core?",
+        a: "<ul><li><b>Query Filters:</b> Глобальные условия, автоматом дописываемые ко всем запросам сущности (например, мягкое удаление: <code>where IsDeleted == false</code>).</li><li><b>Interceptors:</b> Перехватчики операций (отправка SQL, сохранение) для аудита или модификации на лету.</li></ul>"
+      },
+      {
+        q: "Оптимизация запросов: compiled queries, split queries, projection?",
+        a: "<ul><li><b>Projection:</b> Выборка строго нужных полей через <code>.Select(x => new { ... })</code> вместо вытягивания всей строки.</li><li><b>Split Queries ( AsSplitQuery() ):</b> Разделение одного запроса с кучей JOIN-ов на несколько раздельных, исключая декартов взрыв данных.</li></ul>"
+      },
+      {
+        q: "Конкурентный доступ: Optimistic vs Pessimistic Concurrency?",
+        a: "<ul><li><b>Optimistic (Оптимистическая):</b> Строки не блокируются, в таблицу внедряется колонка версии (RowVersion). Если при записи версия изменилась другим потоком — бросает исключение.</li><li><b>Pessimistic (Пессимистическая):</b> Строка жестко блокируется на уровне БД при чтении (SELECT ... FOR UPDATE). Реализуется через сырой SQL.</li></ul>"
+      }
     ]
   },
   {
     title:"Базы данных и SQL",icon: icons.table,color:"#533AB7",bg:"#EEEDFE",tc:"#3C3489",
     questions:[
-      "ACID — что означает каждое свойство, как обеспечивается в SQL?",
-      "Уровни изоляции транзакций: Read Uncommitted → Serializable, аномалии?",
-      "Индексы: Clustered vs Non-Clustered, Covering Index, когда не помогают?",
-      "EXPLAIN / Query Plan — как читать и оптимизировать?",
-      "Нормализация: 1NF-3NF-BCNF, денормализация — когда оправдана?",
-      "JOIN-ы: INNER, LEFT, RIGHT, FULL OUTER, CROSS, самосоединение?",
-      "Window Functions: ROW_NUMBER, RANK, LAG, LEAD, PARTITION BY?",
-      "CTE (WITH) vs подзапросы vs временные таблицы — разница?",
-      "Deadlocks — почему возникают и как избежать?",
-      "Репликация vs Шардирование vs Партиционирование?",
-      "Разница между SQL и NoSQL: когда выбирать каждый?",
-      "Что такое CAP-теорема применительно к БД?",
+      {
+        q: "ACID — что означает каждое свойство, как обеспечивается в SQL?",
+        a: "<ul><li><b>Atomicity (Атомарность):</b> Транзакция выполняется вся или ни одной (обеспечивается WAL журналом).</li><li><b>Consistency (Согласованность):</b> База переходит из одного валидного состояния в другое, соблюдая ограничения (FK, Constraints).</li><li><b>Isolation (Изоляция):</b> Параллельные транзакции изолированы друг от друга (блокировки, уровни изоляции).</li><li><b>Durability (Долговечность):</b> Если COMMIT прошел, данные не пропадут при выключении питания (гарантированная запись журнала на диск).</li></ul>"
+      },
+      {
+        q: "Уровни изоляции транзакций: Read Uncommitted → Serializable, аномалии?",
+        a: "<ul><li><b>Read Uncommitted:</b> Видны чужие незафиксированные данные. Аномалия: <i>Грязное чтение</i>.</li><li><b>Read Committed:</b> Видны только зафиксированные данные. Защищает от грязного чтения. Аномалия: <i>Неповторяющееся чтение</i>.</li><li><b>Repeatable Read:</b> Блокирует считанные строки. Защищает от неповторяющегося чтения. Аномалия: <i>Фантомное чтение</i> (новые строки при повторном запросе диапазона).</li><li><b>Serializable:</b> Полная последовательная изоляция (максимум блокировок, медленно).</li></ul>"
+      },
+      {
+        q: "Индексы: Clustered vs Non-Clustered, Covering Index, когда не помогают?",
+        a: "<ul><li><b>Clustered:</b> Физический порядок строк на диске (только один на таблицу, обычно PK).</li><li><b>Non-Clustered:</b> Отдельное дерево поиска B-Tree со значениями колонок и указателем на строку.</li><li><b>Covering Index:</b> Индекс, содержащий в себе все поля из SELECT. База берет данные прямо из индекса, минуя саму таблицу.</li><li><b>Не помогают:</b> При поиске с отрицанием (<code>NOT IN</code>), шаблонах с диким знаком в начале (<code>LIKE '%abc'</code>) или вызове функций над колонкой (<code>WHERE YEAR(Date) = 2026</code>).</li></ul>"
+      },
+      {
+        q: "EXPLAIN / Query Plan — как читать и оптимизировать?",
+        a: "<ul><li>План запроса показывает шаги СУБД. Нужно искать тяжелые операции: уходить от <code>Table/Seq Scan</code> (полный обход таблицы) и заменять их на <code>Index Scan/Seek</code> (поиск по индексу), убирать лишние сортировки (Sort).</li></ul>"
+      },
+      {
+        q: "Нормализация: 1NF-3NF-BCNF, денормализация — когда оправдана?",
+        a: "<ul><li><b>1NF:</b> Атомарность полей и первичный ключ. <b>2NF:</b> Выполнение 1NF + все поля зависят от всего составного ключа целиком. <b>3NF:</b> Отсутствие транзитивных зависимостей (неключевые поля не зависят от других неключевых полей).</li><li><b>Денормализация:</b> Намеренное дублирование данных. Оправдана в Read-Heavy нагрузках и OLAP хранилищах для избавления от тяжелых JOIN-ов.</li></ul>"
+      },
+      {
+        q: "JOIN-ы: INNER, LEFT, RIGHT, FULL OUTER, CROSS, самосоединение?",
+        a: "<ul><li><b>INNER:</b> Только совпадения из обеих таблиц. <b>LEFT:</b> Все из левой + совпадения из правой (иначе NULL). <b>FULL OUTER:</b> Все из обеих таблиц. <b>CROSS:</b> Декартово произведение (каждая строка с каждой). <b>Самосоединение:</b> JOIN таблицы самой с собой (например, Employee и его ManagerId).</li></ul>"
+      },
+      {
+        q: "Window Functions: ROW_NUMBER, RANK, LAG, LEAD, PARTITION BY?",
+        a: "<ul><li>Вычисления над набором строк без схлопывания их в одну строку. <b>PARTITION BY</b> задает окно группировки. <code>ROW_NUMBER()</code> дает порядковый номер. <code>RANK()</code> дает ранг (с пропусками). <code>LAG/LEAD</code> вытягивают значения из предыдущей/следующей строки окна.</li></ul>"
+      },
+      {
+        q: "CTE (WITH) vs подзапросы vs временные таблицы — разница?",
+        a: "<ul><li><b>Подзапросы:</b> Внутри основного запроса, могут ухудшать читаемость. <b>CTE (WITH):</b> Именованный виртуальный набор данных, улучшает читаемость, поддерживает рекурсию, живет только в рамках запроса. <b>Временные таблицы (#table):</b> Физические таблицы в памяти СУБД со своими индексами и статистикой для сложных многоэтапных расчетов.</li></ul>"
+      },
+      {
+        q: "Deadlocks — почему возникают и как избежать?",
+        a: "<ul><li><b>Почему:</b> Взаимная блокировка ресурсов (Т1 держит А и ждет Б; Т2 держит Б и ждет А). Они бесконечно ждут друг друга.</li><li><b>Как избежать:</b> Обновлять таблицы строго в одинаковом порядке во всем коде, делать транзакции короткими, снижать уровни изоляции (RC Snapshot).</li></ul>"
+      },
+      {
+        q: "Репликация vs Шардирование vs Партиционирование?",
+        a: "<ul><li><b>Партиционирование:</b> Разделение одной таблицы на секции внутри одной БД (по годам).</li><li><b>Репликация:</b> Копирование данных со主 сервера (Master) на подчиненные (Slaves) для отказоустойчивости и чтения.</li><li><b>Шардирование:</b> Разнос кусков одной таблицы по разным физическим серверам БД (масштабирование записи).</li></ul>"
+      },
+      {
+        q: "Разница между SQL и NoSQL: когда выбирать каждый?",
+        a: "<ul><li><b>SQL:</b> Строгая схема, связи, транзакции ACID. Для финансов, e-commerce, систем со сложными связями.</li><li><b>NoSQL:</b> Динамическая схема, горизонтальное масштабирование из коробки. Для огромных объемов слабоструктурированных данных (логи, чаты, кэш, аналитика реального времени).</li></ul>"
+      },
+      {
+        q: "Что такое CAP-теорема применительно к БД?",
+        a: "<ul><li>В любой распределенной системе одновременно можно обеспечить только 2 из 3 свойств: <b>C</b>onsistency (согласованность данных), <b>A</b>vailability (доступность узлов), <b>P</b>artition tolerance (устойчивость к разрыву связи). В сети сбои связи (P) неизбежны, поэтому всегда выбирают между CP или AP.</li></ul>"
+      }
     ]
   },
   {
     title:"Архитектура и паттерны",icon: icons.arch,color:"#854F0B",bg:"#FAEEDA",tc:"#633806",
     questions:[
-      "SOLID: расшифровка, реальные примеры нарушений на .NET?",
-      "DRY, KISS, YAGNI — в чём смысл и где грань?",
-      "Слоистая архитектура: Presentation → Application → Domain → Infrastructure?",
-      "Clean Architecture vs Onion Architecture — отличия?",
-      "CQRS: Command/Query разделение, зачем и когда?",
-      "Mediator pattern (MediatR) — как работает, плюсы и минусы?",
-      "Repository + Unit of Work pattern — смысл и критика?",
-      "Domain-Driven Design: Entity, Value Object, Aggregate, Domain Event?",
-      "Event Sourcing — что это и когда применять?",
-      "Microservices vs Monolith — когда что выбирать?",
-      "API Gateway pattern — зачем нужен?",
-      "Saga pattern для распределённых транзакций (Choreography vs Orchestration)?",
-      "Outbox pattern — зачем нужен при работе с очередями и БД?",
-      "Circuit Breaker, Retry, Bulkhead — паттерны отказоустойчивости?",
-      "Что такое Event-Driven Architecture?",
+      {
+        q: "SOLID: расшифровка, реальные примеры нарушений на .NET?",
+        a: "<ul><li><b>S (Single Responsibility):</b> Класс отвечает за одну вещь. Нарушение: Контроллер, сам пишущий SQL и шлющий email.</li><li><b>O (Open/Closed):</b> Открыт для расширения, закрыт для изменений. Нарушение: switch(order.Type) внутри метода расчета скидки — при новом типе приходится переписывать метод.</li><li><b>L (Liskov Substitution):</b> Наследник заменяет базу без поломок. Нарушение: бросать NotSupportedException в ReadOnlyStream.Write().</li><li><b>I (Interface Segregation):</b> Много мелких интерфейсов лучше одного. Нарушение: огромный IRepository с методами Delete там, где нужно только чтение.</li><li><b>D (Dependency Inversion):</b> Зависимость от абстракций. Нарушение: вызов жесткого <code>new SqlDbContext()</code> внутри бизнес-сервиса.</li></ul>"
+      },
+      {
+        q: "DRY, KISS, YAGNI — в чём смысл и где грань?",
+        a: "<ul><li><b>DRY (Don't Repeat Yourself):</b> Избегай дублирования кода. Грань: не объединять похожий внешне, но разный по бизнес-смыслу код.</li><li><b>KISS:</b> Делай проще, избегай избыточных усложнений паттернами там, где хватает if-else.</li><li><b>YAGNI:</b> Не пиши код про запас «на будущее». Решай только текущую задачу.</li></ul>"
+      },
+      {
+        q: "Слоистая архитектура: Presentation → Application → Domain → Infrastructure?",
+        a: "<ul><li>Разделение кода на слои с жестким правилом: верхние слои знают о нижних, но нижние не знают о верхних. Presentation (UI/Контроллеры) → Application (Use cases) → Domain (Сущности, логика) ← Infrastructure (БД, внешние API).</li></ul>"
+      },
+      {
+        q: "Clean Architecture vs Onion Architecture — отличия?",
+        a: "<ul><li>Суть одинакова: Независимый домен (Ядро) в самом центре, зависимости идут строго снаружи внутрь. Отличия только в терминологии: Clean Architecture (Р. Мартин) выделяет слой Use Cases вокруг сущностей, а Onion (Дж. Палермо) делит внешнюю инфраструктуру в виде концентрических колец.</li></ul>"
+      },
+      {
+        q: "CQRS: Command/Query разделение, зачем и когда?",
+        a: "<ul><li>Разделение операций на Команды (изменяют данные, ничего не возвращают) и Запросы (читают данные, ничего не меняют). Применяется для оптимизации чтения и записи отдельно, вплоть до разных баз данных.</li></ul>"
+      },
+      {
+        q: "Mediator pattern (MediatR) — как работает, плюсы и минусы?",
+        a: "<ul><li>Классы шлют запросы в посредник (Mediator), который сам ищет нужный обработчик (Handler). Плюсы: ослабление зацепления кода, тонкие контроллеры, удобные сквозные фильтры. Минусы: «магия» в коде, усложнение навигации (нельзя перейти к реализации кликом).</li></ul>"
+      },
+      {
+        q: "Repository + Unit of Work pattern — смысл и критика?",
+        a: "<ul><li>Смысл — изолировать логику данных от бизнес-кода. Критика в .NET: DbContext в EF Core <b>уже сам по себе</b> реализует эти паттерны (DbSet — репозиторий, DbContext — Unit of Work). Создание кастомной обертки поверх EF часто превращается в «абстракцию над абстракцией», урезая возможности LINQ.</li></ul>"
+      },
+      {
+        q: "Domain-Driven Design: Entity, Value Object, Aggregate, Domain Event?",
+        a: "<ul><li><b>Entity:</b> Объект с уникальным ID (User).</li><li><b>Value Object:</b> Объект без ID, измеряемый только свойствами, неизменяем (Money).</li><li><b>Aggregate:</b> Кластер сущностей под управлением Aggregate Root, обеспечивающего целостность.</li><li><b>Domain Event:</b> Факт произошедшего в домене события (OrderPlaced).</li></ul>"
+      },
+      {
+        q: "Event Sourcing — что это и когда применять?",
+        a: "<ul><li>Паттерн, где состояние сущности не перезаписывается, а вычисляется как лог всех произошедших исторических событий с момента создания (всегда делаем INSERT события вместо UPDATE). Применяется там, где критически важен аудит (банкинг, логистика).</li></ul>"
+      },
+      {
+        q: "Microservices vs Monolith — когда что выбирать?",
+        a: "<ul><li><b>Monolith:</b> Одна база, единый код, легкий деплой. Для MVP, небольших команд и стартапов.</li><li><b>Microservices:</b> Сервисы разделены по сети со своими базами. Для огромных систем со множеством команд, когда части приложения требуют разного масштабирования.</li></ul>"
+      },
+      {
+        q: "API Gateway pattern — зачем нужен?",
+        a: "<ul><li>Единая точка входа для клиентов в микросервисах. Занимается роутингом, аутентификацией, SSL-терминированием, rate limiting и агрегацией ответов.</li></ul>"
+      },
+      {
+        q: "Saga pattern для распределённых транзакций (Choreography vs Orchestration)?",
+        a: "<ul><li>Цепочка локальных транзакций в микросервисах. При падении шага запускаются компенсирующие транзакции (откат). <b>Хореография:</b> нет центра, сервисы общаются событиями асинхронно. <b>Оркестрация:</b> выделенный сервис-менеджер явно командует шагами.</li></ul>"
+      },
+      {
+        q: "Outbox pattern — зачем нужен при работе с очередями и БД?",
+        a: "<ul><li>Гарантирует надежность отправки писем в брокер при изменении БД. Сообщение пишется в таблицу Outbox в той же транзакции, что и бизнес-данные. Отдельный воркер постоянно выгребает записи из Outbox и шлет их в очередь брокера.</li></ul>"
+      },
+      {
+        q: "Circuit Breaker, Retry, Bulkhead — паттерны отказоустойчивости?",
+        a: "<ul><li><b>Retry:</b> Автоповтор запроса при кратковременном сетевом лаге.</li><li><b>Circuit Breaker:</b> Если внешний сервис стабильно падает, прерыватель размыкает цепь и сразу возвращает ошибку локально, давая сервису время ожить.</li><li><b>Bulkhead:</b> Изоляция ресурсов (пула потоков) для конкретного внешнего API, чтобы его падение не сожрало все потоки приложения.</li></ul>"
+      },
+      {
+        q: "Что такое Event-Driven Architecture?",
+        a: "<ul><li>Архитектурный стиль, в котором микросервисы слабо связаны и общаются посредством публикации и обработки событий через брокер сообщений, не зная о конечных получателях.</li></ul>"
+      }
     ]
   },
   {
     title:"Тестирование",icon: icons.test,color:"#3B6D11",bg:"#EAF3DE",tc:"#27500A",
     questions:[
-      "Пирамида тестирования: Unit → Integration → E2E?",
-      "Что такое xUnit, NUnit, MSTest — основные отличия?",
-      "Mock vs Stub vs Fake vs Spy — когда что использовать?",
-      "Как тестировать код с DI: TestServer, WebApplicationFactory?",
-      "Как тестировать EF Core: InMemory vs реальная БД vs Testcontainers?",
-      "AAA-паттерн (Arrange-Act-Assert)?",
-      "Что такое Mutation Testing?",
-      "TDD vs BDD — в чём разница, когда применять?",
-      "Как тестировать асинхронный код в .NET?",
-      "Code Coverage — что измеряет и что не измеряет?",
+      {
+        q: "Пирамида тестирования: Unit → Integration → E2E?",
+        a: "<ul><li><b>Unit:</b> Основание (больше всего). Изолированные тесты методов/классов без внешних связей. Быстрые.</li><li><b>Integration:</b> Середина. Проверяют совместную работу компонентов приложения и реальной БД/API.</li><li><b>E2E (End-to-End):</b> Вершина. Проверка всей системы эмуляцией действий пользователя в браузере. Медленные.</li></ul>"
+      },
+      {
+        q: "Что такое xUnit, NUnit, MSTest — основные отличия?",
+        a: "<ul><li><b>xUnit:</b> Стандарт де-факто в .NET Core. Изолирует каждый тест (новый экземпляр класса на каждый тест), использует конструктор вместо Setup и параллелит тесты из коробки. <b>NUnit:</b> Хранит состояние класса между тестами по умолчанию, использует атрибуты Setup.</li></ul>"
+      },
+      {
+        q: "Mock vs Stub vs Fake vs Spy — когда что использовать?",
+        a: "<ul><li><b>Stub (Заглушка):</b> Жестко возвращает заготовленные данные. <b>Mock (Макет):</b> Проверяет поведение (был ли вызван метод 1 раз). <b>Fake (Подделка):</b> Упрощенная рабочая логика (InMemoryRepository). <b>Spy (Шпион):</b> Записывает аргументы реальных вызовов объекта.</li></ul>"
+      },
+      {
+        q: "Как тестировать код с DI: TestServer, WebApplicationFactory?",
+        a: "<ul><li>Использовать <code>WebApplicationFactory</code>. Класс поднимает приложение в памяти на легковесном <code>TestServer</code>, позволяя подменять любые сервисы в DI-контейнере перед тестом и слать реальные HTTP-запросы.</li></ul>"
+      },
+      {
+        q: "Как тестировать EF Core: InMemory vs реальная БД vs Testcontainers?",
+        a: "<ul><li><b>InMemory:</b> Быстро, но плохо (не поддерживает транзакции, FK и специфичный SQL).</li><li><b>Testcontainers:</b> Лучший стандарт. Библиотека прямо из C# кода перед тестами поднимает чистый Docker-контейнер с реальной СУБД (Postgres/MSSQL), а после теста уничтожает его.</li></ul>"
+      },
+      {
+        q: "AAA-паттерн (Arrange-Act-Assert)?",
+        a: "<ul><li>Структура Unit-теста. <b>Arrange:</b> Подготовка данных и заглушек. <b>Act:</b> Вызов тестируемого метода. <b>Assert:</b> Проверка вернувшегося результата.</li></ul>"
+      },
+      {
+        q: "Что такое Mutation Testing?",
+        a: "<ul><li>Тестирование самих тестов. Инструмент (Stryker.NET) намеренно ломает рабочий код (меняет <code>&gt;</code> на <code>&lt;</code>) и прогоняет тесты. Если тесты все равно прошли — значит, они некачественные и пропускают баги.</li></ul>"
+      },
+      {
+        q: "TDD vs BDD — в чём разница, когда применять?",
+        a: "<ul><li><b>TDD:</b> Сначала пишется падающий Unit-тест, потом минимальный код для его прохождения, затем рефакторинг. Ориентирован на разработчика.</li><li><b>BDD:</b> Расширение TDD, сценарии пишутся понятным языком в формате Given-When-Then для коммуникации бизнеса и разработки.</li></ul>"
+      },
+      {
+        q: "Как тестировать асинхронный код в .NET?",
+        a: "<ul><li>Тестовые методы должны возвращать <code>Task</code> (а не void), а внутри обязательно использовать ключевое слово <code>await</code>. Использование <code>.Result</code> в тестах ведет к дедлокам.</li></ul>"
+      },
+      {
+        q: "Code Coverage — что измеряет и что не измеряет?",
+        a: "<ul><li>Измеряет процент строк кода, физически выполненных при прогоне тестов. Но 100% покрытие <b>не гарантирует</b> отсутствие багов, так как тесты могли выполнить код, но не проверить граничные условия через Assert.</li></ul>"
+      }
     ]
   },
   {
     title:"Очереди и асинхронность",icon: icons.queue,color:"#993556",bg:"#FBEAF0",tc:"#72243E",
     questions:[
-      "Для чего нужны очереди сообщений: RabbitMQ, Kafka, Azure Service Bus?",
-      "Разница между очередью (Queue) и топиком (Topic/Exchange)?",
-      "At-least-once vs At-most-once vs Exactly-once delivery?",
-      "Идемпотентность — что это и как обеспечивать?",
-      "Как работает MassTransit или другой .NET-клиент для брокеров?",
-      "Dead Letter Queue — зачем нужна?",
-      "Что такое Backpressure?",
-      "Channels в .NET (System.Threading.Channels) — для чего?",
-      "Background Services: IHostedService, BackgroundService?",
+      {
+        q: "Для чего нужны очереди сообщений: RabbitMQ, Kafka, Azure Service Bus?",
+        a: "<ul><li>Для асинхронной связи микросервисов. Сглаживают пиковые нагрузки, гарантируют доставку при падении получателей и убирают необходимость долгого ожидания ответов по HTTP.</li></ul>"
+      },
+      {
+        q: "Разница между очередью (Queue) и топиком (Topic/Exchange)?",
+        a: "<ul><li><b>Queue:</b> Точка-точка (один к одному). Сообщение обрабатывает строго один воркер. <b>Topic / Exchange:</b> Издатель-Подписчик (один ко многим). Сообщение дублируется и рассылается по нескольким очередям разных сервисов.</li></ul>"
+      },
+      {
+        q: "At-least-once vs At-most-once vs Exactly-once delivery?",
+        a: "<ul><li><b>At-most-once:</b> Отправил и забыл. Сообщение может потеряться, но дублей нет. <b>At-least-once:</b> Гарантированная доставка с подтверждением (ACK). Потерь нет, но при сбое сети возможны дубли (самый частый дефолт). <b>Exactly-once:</b> Строго один раз без потерь и дублей (дорогой режим).</li></ul>"
+      },
+      {
+        q: "Идемпотентность — что это и как обеспечивать?",
+        a: "<ul><li>Свойство операции, при котором повторный вызов с теми же данными дает такой же результат без поломки состояния. При получении сообщения проверяется его уникальный Id в базе/Redis — если такой Id уже обрабатывался, сообщение игнорируется.</li></ul>"
+      },
+      {
+        q: "Как работает MassTransit или другой .NET-клиент для брокеров?",
+        a: "<ul><li>Высокоуровневая шина-абстракция над сырыми драйверами брокеров. Берет на себя рутину: создание очередей, сериализацию, роутинг по C#-классам, встроенный Retry и логику перемещения ошибок в DLQ.</li></ul>"
+      },
+      {
+        q: "Dead Letter Queue — зачем нужна?",
+        a: "<ul><li><b>DLQ:</b> Специальная резервная очередь, куда брокер складывает сообщения, которые консьюмер не смог обработать (из-за ошибок в коде или битого JSON) после всех попыток Retry, чтобы не забивать основной поток.</li></ul>"
+      },
+      {
+        q: "Что такое Backpressure?",
+        a: "<ul><li>Проблема (и защита), когда продюсер шлет сообщения быстрее, чем консьюмер успевает их обрабатывать. Механизм заставляет получателя давать сигнал брокеру притормозить темп выдачи данных, чтобы не перегрузить память.</li></ul>"
+      },
+      {
+        q: "Channels в .NET (System.Threading.Channels) — для чего?",
+        a: "<ul><li>Высокопроизводительные потокобезопасные структуры для паттерна Producer-Consumer внутри <b>одного</b> приложения в памяти. Работают на асинхронных примитивах (ValueTask) быстрее старых BlockingCollection.</li></ul>"
+      },
+      {
+        q: "Background Services: IHostedService, BackgroundService?",
+        a: "<ul><li>Фоновые задачи в ASP.NET Core. <code>IHostedService</code> — базовый интерфейс (Start/Stop). <code>BackgroundService</code> — обертка с бесконечным методом <code>ExecuteAsync(CancellationToken)</code>, где пишется фоновая рутина обработки очередей или расчетов.</li></ul>"
+      }
     ]
   },
   {
     title:"Производительность и диагностика",icon: icons.chart,color:"#5F5E5A",bg:"#F1EFE8",tc:"#2C2C2A",
     questions:[
-      "Как профилировать .NET приложение: dotnet-trace, PerfView, BenchmarkDotNet?",
-      "Что такое GC паузы и как минимизировать аллокации?",
-      "Memory leaks в .NET — типичные причины, как находить?",
-      "Thread starvation — как диагностировать в ASP.NET Core?",
-      "CPU-bound vs I/O-bound задачи — как правильно распараллеливать?",
-      "Как работает кэширование: IMemoryCache, IDistributedCache, Redis?",
-      "Cache invalidation стратегии: TTL, eviction, distributed cache consistency?",
-      "Что такое connection pooling для БД и HTTP?",
-      "HTTP/2 и HTTP/3 — преимущества для .NET сервисов?",
-      "Как работает Minimal API быстрее обычных Controllers?",
+      {
+        q: "Как профилировать .NET приложение: dotnet-trace, PerfView, BenchmarkDotNet?",
+        a: "<ul><li><b>BenchmarkDotNet:</b> Точный микро-бенчмаркинг скорости и аллокаций отдельных методов при разработке. <b>dotnet-trace:</b> Сбор дампов и трассировок CPU прямо на продакшене (даже под Linux). <b>PerfView:</b> Глубокий анализ дампов памяти для поиска причин тяжелых GC и утечек.</li></ul>"
+      },
+      {
+        q: "Что такое GC паузы и как минимизировать аллокации?",
+        a: "<ul><li>GC паузы — остановка потоков приложения (Stop-the-World) для очистки памяти. Минимизация: использовать структуры вместо классов где возможно, применять Span&lt;T&gt; для парсинга строк без аллокаций в куче, переиспользовать массивы через ArrayPool.</li></ul>"
+      },
+      {
+        q: "Memory leaks в .NET — типичные причины, как находить?",
+        a: "<ul><li>Ситуация, когда объекты не нужны, но GC не может их стереть из-за живых ссылок. Причины: забытые отписки от событий (events), статические коллекции, невызванный Dispose. Поиск через снятие дампов памяти (<code>dotnet-dump</code>) и dotMemory.</li></ul>"
+      },
+      {
+        q: "Thread starvation — как диагностировать в ASP.NET Core?",
+        a: "<ul><li>Голодание потоков, когда весь ThreadPool заблокирован (обычно из-за вызовов <code>.Result</code> или <code>.Wait()</code> в асинхронном коде). Входящие запросы копятся, приложение виснет. Диагностика: если CPU низкий, а число потоков летит вверх до лимита — это голодание.</li></ul>"
+      },
+      {
+        q: "CPU-bound vs I/O-bound задачи — как правильно распараллеливать?",
+        a: "<ul><li><b>CPU-bound (вычисления):</b> Нагружают процессор. Параллелить через <code>Task.Run()</code> или <code>Parallel.ForEach</code> на пуле потоков.</li><li><b>I/O-bound (ввод-вывод, сеть, БД):</b> Ожидание внешних ответов. Их <b>нельзя</b> оборачивать в Task.Run(). Нужно использовать чистый async/await, чтобы поток вообще освобождался во время ожидания.</li></ul>"
+      },
+      {
+        q: "Как работает кэширование: IMemoryCache, IDistributedCache, Redis?",
+        a: "<ul><li><b>IMemoryCache:</b> Кэш в памяти конкретного инстанса приложения. Быстро, но стирается при перезапуске. <b>IDistributedCache:</b> Интерфейс для распределенного кэша. <b>Redis:</b> Внешняя NoSQL база данных в памяти, используемая как общий кэш для всех микросервисов.</li></ul>"
+      },
+      {
+        q: "Cache invalidation стратегии: TTL, eviction, distributed cache consistency?",
+        a: "<ul><li><b>TTL (Time to Live):</b> Время жизни записи (Absolute — жесткое время, Sliding — сброс таймера при обращении). <b>Eviction:</b> Вытеснение старых данных при нехватке места (LRU). Инвалидация распределенного кэша делается явным удалением ключа из Redis при обновлении БД или через брокер сообщений.</li></ul>"
+      },
+      {
+        q: "Что такое connection pooling для БД и HTTP?",
+        a: "<ul><li>Оптимизация, исключающая накладные расходы на постоянное открытие сетевых сокетов. Система держит пул открытых соединений наготове. Работает под капотом в драйверах БД и HttpClientFactory.</li></ul>"
+      },
+      {
+        q: "HTTP/2 и HTTP/3 — преимущества для .NET сервисов?",
+        a: "<ul><li><b>HTTP/2:</b> Мультиплексирование запросов по одному TCP-каналу, сжатие заголовков. <b>HTTP/3:</b> Работает поверх UDP (протокол QUIC). Решает проблему блокировки очереди пакетов на уровне сети при потерях данных.</li></ul>"
+      },
+      {
+        q: "Как работает Minimal API быстрее обычных Controllers?",
+        a: "<ul><li>Маршруты компилируются на старте напрямую в оптимизированные лямбды, минуя MVC-конвейер фильтров и рефлексию поиска контроллеров при каждом HTTP-вызове.</li></ul>"
+      }
     ]
   },
   {
     title:"DevOps и инфраструктура",icon: icons.docker,color:"#185FA5",bg:"#E6F1FB",tc:"#0C447C",
     questions:[
-      "Docker: Dockerfile для .NET, multi-stage builds, оптимизация образа?",
-      "Kubernetes basics: Pod, Deployment, Service, ConfigMap, Secret?",
-      "Как настроить CI/CD для .NET проекта (GitHub Actions, GitLab CI, Azure DevOps)?",
-      "Что такое Helm chart и зачем он нужен?",
-      "12-factor app — принципы применительно к .NET?",
-      "Как реализовать blue-green и canary деплой?",
-      "Что такое OpenTelemetry и как его подключить в .NET?",
-      "Distributed tracing: TraceId, SpanId, как связывать логи?",
-      "Метрики: Prometheus + Grafana, .NET Metrics API?",
-      "Секреты: Vault, Azure Key Vault, Kubernetes Secrets — лучшие практики?",
+      {
+        q: "Docker: Dockerfile для .NET, multi-stage builds,优化 образов?",
+        a: "<ul><li><b>Multi-stage builds:</b> Сборка разбита на этапы. На этапе сборки (build) берется тяжелый образ .NET SDK, а готовый скомпилированный код копируется в финальный чистый ультра-легкий образ .NET Runtime, что в разы уменьшает вес контейнера.</li></ul>"
+      },
+      {
+        q: "Kubernetes basics: Pod, Deployment, Service, ConfigMap, Secret?",
+        a: "<ul><li><b>Pod:</b> Минимальный узел деплоя (контейнер). <b>Deployment:</b> Управляет жизненным циклом подов (реплики, обновления). <b>Service:</b> Постоянный сетевой балансировщик для доступа к подам. <b>ConfigMap/Secret:</b> Хранилища настроек и секретов, монтируемые в контейнеры.</li></ul>"
+      },
+      {
+        q: "Как настроить CI/CD для .NET проекта (GitHub Actions, GitLab CI, Azure DevOps)?",
+        a: "<ul><li>Описывается yml-файлом. Шаги: триггер на пуш → <code>dotnet restore</code> → <code>dotnet build --configuration Release</code> → <code>dotnet test</code> → сборка Docker-образа → отправка в Registry → команда деплоя в Kubernetes.</li></ul>"
+      },
+      {
+        q: "Что такое Helm chart и зачем он нужен?",
+        a: "<ul><li>Менеджер пакетов для Kubernetes. Позволяет упаковать все манифесты приложения (Deployments, Services) в один шаблон, вынося конфигурации сред (Dev/Prod) в отдельный файл.</li></ul>"
+      },
+      {
+        q: "12-factor app — принципы применительно к .NET?",
+        a: "<ul><li>Методология облачных приложений: одна кодовая база в Git, настройки строго в переменных среды, приложение не хранит состояние на диске (Stateless), логи пишутся строго в stdout/stderr, зависимости явно зафиксированы (NuGet).</li></ul>"
+      },
+      {
+        q: "Как реализовать blue-green и canary деплой?",
+        a: "<ul><li><b>Blue-Green:</b> Рядом с рабочей старой версией (Blue) разворачивается копия новой (Green). После проверок балансировщик переключает 100% трафика на Green. <b>Canary:</b> Новая версия получает сначала лишь малую часть трафика (5%), доля плавно растет при отсутствии ошибок.</li></ul>"
+      },
+      {
+        q: "Что такое OpenTelemetry и как его подключить в .NET?",
+        a: "<ul><li>Открытый стандарт сбора телеметрии (логов, метрик, трассировок). Подключается через Nuget пакеты методом <code>builder.Services.AddOpenTelemetry()</code> с настройкой экспорта в Jaeger/Prometheus.</li></ul>"
+      },
+      {
+        q: "Distributed tracing: TraceId, SpanId, как связывать логи?",
+        a: "<ul><li><b>TraceId:</b> Уникальный сквозной ID всей цепочки вызовов через все микросервисы. <b>SpanId:</b> ID шага внутри одного сервиса. Они передаются в HTTP-заголовках, а логер (Serilog) автоматом пишет их в каждую строку лога для сквозной фильтрации в Kibana.</li></ul>"
+      },
+      {
+        q: "Метрики: Prometheus + Grafana, .NET Metrics API?",
+        a: "<ul><li>В .NET используется встроенный класс <code>Meter</code> для подсчета показателей (число ошибок, скорость). <b>Prometheus</b> стягивает эти числовые метрики с приложения по API, а <b>Grafana</b> строит на их основе графики и дашборды.</li></ul>"
+      },
+      {
+        q: "Секреты: Vault, Azure Key Vault, Kubernetes Secrets — лучшие практики?",
+        a: "<ul><li>Никогда не хранить секреты в Git-коде. На локале юзать <code>User Secrets</code>, на проде — внешние хранилища (HashiCorp Vault). Приложение при старте запрашивает секреты по защищенному API, аутентифицируясь через токены пода K8s.</li></ul>"
+      }
     ]
   },
   {
     title:"Безопасность",icon: icons.shield,color:"#A32D2D",bg:"#FCEBEB",tc:"#791F1F",
     questions:[
-      "OWASP Top 10 — какие актуальны для .NET приложений?",
-      "SQL Injection, XSS, CSRF — как предотвращать в ASP.NET Core?",
-      "JWT: структура, подпись, хранение, refresh токены, отзыв?",
-      "OAuth2 vs OpenID Connect — разница и сценарии?",
-      "Как правильно хранить пароли: BCrypt, Argon2, PBKDF2?",
-      "HTTPS, TLS, сертификаты — как настроить в .NET?",
-      "Sensitive data: как не допустить утечки в логах и ответах API?",
-      "Dependency scanning: уязвимые NuGet пакеты, как отслеживать?",
+      {
+        q: "OWASP Top 10 — какие актуальны для .NET приложений?",
+        a: "<ul><li>Список критических угроз веба. Для .NET актуальны: Broken Authentication (сбои аутентификации), Injection (инъекции SQL), Cross-Site Scripting (XSS), Security Misconfiguration и уязвимые старые NuGet-пакеты.</li></ul>"
+      },
+      {
+        q: "SQL Injection, XSS, CSRF — как предотвращать в ASP.NET Core?",
+        a: "<ul><li><b>SQL Injection:</b> Использовать параметризованные запросы (в EF Core идут по умолчанию). <b>XSS:</b> Движок Razor автоматически экранирует выводимый текст. Данные пользователей нужно санировать. <b>CSRF:</b> Использование антиподделочных токенов (<code>[ValidateAntiForgeryToken]</code>).</li></ul>"
+      },
+      {
+        q: "JWT: структура, подпись, хранение, refresh токены, отзыв?",
+        a: "<ul><li><b>Структура:</b> Header.Payload.Signature. Подпись защищает от изменений данных клиентом. Безопаснее хранить в HttpOnly-куках от XSS. Refresh-токены хранятся в БД сервера для обновления короткоживущих JWT. Для экстренного отзыва JWT ведут черные списки в Redis.</li></ul>"
+      },
+      {
+        q: "OAuth2 vs OpenID Connect — разница и сценарии?",
+        a: "<ul><li><b>OAuth2:</b> Протокол <i>авторизации</i> (выдать приложению права доступа к вашему диску на Google). <b>OpenID Connect (OIDC):</b> Надстройка над OAuth2 для <i>аутентификации</i> (кнопка Войти через Google, выдает ID Token с данными профиля).</li></ul>"
+      },
+      {
+        q: "Как правильно хранить пароли: BCrypt, Argon2, PBKDF2?",
+        a: "<ul><li>Пароли хэшируются с использованием медленных криптостойких алгоритмов с добавлением уникальной случайной соли (Salt). Стандарт в .NET — PBKDF2 (встроен в Identity), либо современные BCrypt и Argon2.</li></ul>"
+      },
+      {
+        q: "HTTPS, TLS, сертификаты — как настроить в .NET?",
+        a: "<ul><li>Включается через <code>app.UseHttpsRedirection()</code>. На проде настройку TLS и сертификатов (Let's Encrypt) обычно полностью отдают внешнему прокси-серверу (Nginx) или Ingress-контроллеру в K8s, снимая крипто-нагрузку с Kestrel.</li></ul>"
+      },
+      {
+        q: "Sensitive data: как не допустить утечки в логах и ответах API?",
+        a: "<ul><li>Для API ответов использовать только чистые <b>DTO</b>, а не сущности БД. В логах настраивать маскирование паролей и обязательно выключать детальное логирование параметров EF Core (<code>EnableSensitiveDataLogging</code>) на проде.</li></ul>"
+      },
+      {
+        q: "Dependency scanning: уязвимые NuGet пакеты, как отслеживать?",
+        a: "<ul><li>Использовать CLI-команду <code>dotnet list package --vulnerable</code>. В CI/CD пайплайны рекомендуется вшивать сканеры зависимостей (Dependabot, Snyk), блокирующие сборку при критических уязвимостях в NuGet.</li></ul>"
+      }
     ]
   },
   {
     title:"Работа в команде и процессы",icon: icons.users,color:"#533AB7",bg:"#EEEDFE",tc:"#3C3489",
     questions:[
-      "Как проводить Code Review: на что смотреть, как давать фидбек?",
-      "Git flow vs trunk-based development — когда что выбирать?",
-      "Как оценивать задачи? Story points, T-shirt sizes, Planning Poker?",
-      "Как объяснять технический долг бизнесу?",
-      "Как ментировать джунов и проводить технические собеседования?",
-      "Что делать, если дедлайн горит, а задача большая?",
-      "Как договариваться об архитектурных решениях в команде?",
+      {
+        q: "Как проводить Code Review: на что смотреть, как давать фидбек?",
+        a: "<ul><li>Смотреть на бизнес-логику, архитектуру (SOLID), тесты и безопасность. Форматирование должен проверять линтер, а не человек. Фидбек давать конструктивно, критиковать код, а не автора. Использовать формат предложений, а не приказов, объяснять причины.</li></ul>"
+      },
+      {
+        q: "Git flow vs trunk-based development — когда что выбирать?",
+        a: "<ul><li><b>Git Flow:</b> Много веток (feature, develop, release, master). Для крупных систем со строгими редкими циклами релизов. <b>Trunk-Based:</b> Все пушат небольшие фичи напрямую в ветку main ежедневно. Требует мощных автотестов, подходит для SaaS с деплоем по несколько раз в день.</li></ul>"
+      },
+      {
+        q: "Как оценивать задачи? Story points, T-shirt sizes, Planning Poker?",
+        a: "<ul><li><b>Story Points:</b> Оценка сложности относительно эталона по шкале Фибоначчи. <b>T-Shirt Sizes:</b> Предварительная оценка крупных кусков (S, M, L). <b>Planning Poker:</b> Командная игра в закрытую для поиска консенсуса оценок и вскрытия скрытых рисков.</li></ul>"
+      },
+      {
+        q: "Как объяснять технический долг бизнесу?",
+        a: "<ul><li>Переводить проблемы на язык денег, рисков и тайминга. Вместо «там плохой SOLID» говорить: «Этот блок хрупкий. Без рефакторинга разработка похожей фичи в будущем займет в 2 раза больше времени, а риск падения вырастет на 30%».</li></ul>"
+      },
+      {
+        q: "Как ментировать джунов и проводить технические собеседования?",
+        a: "<ul><li><b>Ментирование:</b> Направлять наводящими вопросами, а не давать готовые ответы. Обучать самостоятельности. <b>Собеседования:</b> Не гонять по заученной теории спецификаций CLR. Строить беседу вокруг кейсов («Упал прод из-за... твои действия?»), оценивать ход мысли и софт-скиллы.</li></ul>"
+      },
+      {
+        q: "Что делать, если дедлайн горит, а задача большая?",
+        a: "<ul><li>Сразу сообщить менеджеру. Предложить порезать скоуп — выделить жесткий MVP-функционал, который закроет главную боль к сроку, а украшательства перенести. Избегать жестких переработок (овертаймов), ведущих к багам.</li></ul>"
+      },
+      {
+        q: "Как договариваться об архитектурных решениях в команде?",
+        a: "<ul><li>Использовать практику <b>RFC</b> (Request for Comments) или <b>ADR</b> (Architectural Decision Records). Решение описывается в документе с плюсами и минусами, команда правит и утверждает его, фиксируя историю архитектуры.</li></ul>"
+      }
     ]
-  },
+  }
 ];
 
 let openSections = new Set();
+let openAnswers = new Set();
 let totalQ = 0;
+
+function toggleAnswer(ci, qi, event) {
+  const key = `${ci}-${qi}`;
+  if(openAnswers.has(key)) {
+    openAnswers.delete(key);
+  } else {
+    openAnswers.add(key);
+  }
+  render(document.getElementById("search").value);
+}
 
 function render(filter=""){
   const sec = document.getElementById("sections");
@@ -518,24 +965,22 @@ function render(filter=""){
   let visible=0;
 
   data.forEach((cat,ci)=>{
-    const qs = filter ? cat.questions.filter(q=>q.toLowerCase().includes(filter.toLowerCase())) : cat.questions;
+    const qs = filter ? cat.questions.filter(item=>item.q.toLowerCase().includes(filter.toLowerCase())) : cat.questions;
     if(filter && qs.length===0) return;
     visible+=qs.length;
 
-    const isOpen = openSections.has(ci) || filter.length>0;
+    const isSectionOpen = openSections.has(ci) || filter.length>0;
     const div = document.createElement("div");
     div.className="section";
 
     const head = document.createElement("div");
     head.className="sec-head";
     
-    // Подставляем SVG-иконку категории и кастомную иконку шеврона стрелки
     let currentChevron = icons.chevron;
-    if(isOpen) {
+    if(isSectionOpen) {
         currentChevron = currentChevron.replace('chevron', 'chevron open');
     }
 
-    // Присваиваем цвет SVG-иконке через инлайн-стиль color
     let coloredIcon = cat.icon.replace('class="icon"', `class="icon" style="color: ${cat.color}"`);
 
     head.innerHTML=`
@@ -551,20 +996,32 @@ function render(filter=""){
     };
 
     const qlist = document.createElement("div");
-    qlist.className="questions"+(isOpen?" open":"");
+    qlist.className="questions"+(isSectionOpen?" open":"");
 
-    qs.forEach((q,qi)=>{
+    qs.forEach((itemData,qi)=>{
+      const key = `${ci}-${qi}`;
+      const isAnswerOpen = openAnswers.has(key) || filter.length>0;
+      
+      const qWrapper = document.createElement("div");
+      qWrapper.className = "q-wrapper";
+
       const item = document.createElement("div");
       item.className="q-item";
       item.innerHTML=`
         <span class="q-num">${qi+1}</span>
-        <div class="q-text">
-            ${q}
-            <div class="q-ask">Спросить ассистента ${icons.arrowUpRight}</div>
+        <div class="q-text-content">
+            <div class="q-text">${itemData.q}</div>
         </div>
       `;
-      item.onclick=()=>sendPrompt("Объясни подробно: "+q);
-      qlist.appendChild(item);
+      item.onclick=()=>toggleAnswer(ci, qi);
+      
+      const ansDiv = document.createElement("div");
+      ansDiv.className = "answer" + (isAnswerOpen ? " open" : "");
+      ansDiv.innerHTML = itemData.a;
+
+      qWrapper.appendChild(item);
+      qWrapper.appendChild(ansDiv);
+      qlist.appendChild(qWrapper);
     });
 
     div.appendChild(head);
@@ -580,6 +1037,7 @@ function render(filter=""){
       <div class="stat"><div class="stat-n">${totalQ}</div><div class="stat-l">всего вопросов</div></div>
       <div class="stat"><div class="stat-n">${data.length}</div><div class="stat-l">тем</div></div>
       <div class="stat"><div class="stat-n">Middle+</div><div class="stat-l">уровень</div></div>
+      <div class="stat"><div class="stat-n">${currentVisits}</div><div class="stat-l">ваших визитов</div></div>
     `;
   } else {
     statsEl.innerHTML=`<div class="stat"><div class="stat-n">${visible}</div><div class="stat-l">найдено вопросов</div></div>`;
